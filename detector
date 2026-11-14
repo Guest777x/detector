@@ -1,7 +1,13 @@
-local PG = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-print("--- SCANNER STARTED ---")
+-- FORCE DELETE OLD UI
+for _, v in pairs(game:GetService("Players").LocalPlayer.PlayerGui:GetChildren()) do
+    if v.Name == "AutoOfferTest" then
+        v:Destroy()
+    end
+end
 
--- Run continuously
+local PG = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+print("--- NEW SCANNER STARTED ---")
+
 task.spawn(function()
     while true do
         task.wait(1)
@@ -15,7 +21,6 @@ task.spawn(function()
                 for _, obj in ipairs(ScrollingFrame:GetDescendants()) do
                     if obj.Name == "Spacer" then
                         local title = obj:FindFirstChild("Title", true)
-                        -- Search for your item
                         if title and string.find(string.lower(title.Text), "strawberrita") then
                             print("FOUND: " .. title.Text .. " - Clicking it...")
                             if getconnections then
