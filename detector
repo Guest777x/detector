@@ -1,74 +1,18 @@
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local CoreGui = game:GetService("CoreGui")
+print("Hook starting...")
 
--- Create the UI
-local gui = Instance.new("ScreenGui")
-gui.Name = "TradeLogger"
-gui.ResetOnSpawn = false
-gui.Parent = CoreGui
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 400, 0, 500)
-frame.Position = UDim2.new(0, 20, 0, 20)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-frame.BorderSizePixel = 2
-frame.BorderColor3 = Color3.fromRGB(100, 200, 100)
-frame.Parent = gui
-
-local text = Instance.new("ScrollingFrame")
-text.Size = UDim2.new(1, -20, 1, -20)
-text.Position = UDim2.new(0, 10, 0, 10)
-text.BackgroundTransparency = 1
-text.CanvasSize = UDim2.new(0, 0, 0, 0)
-text.AutomaticCanvasSize = Enum.AutomaticSize.Y
-text.ScrollBarThickness = 5
-text.Parent = frame
-
-local layout = Instance.new("UIListLayout")
-layout.Padding = UDim.new(0, 5)
-layout.Parent = text
-
-local function log(msg, isArg)
-    local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, 0, 0, 0)
-    lbl.AutomaticSize = Enum.AutomaticSize.Y
-    lbl.BackgroundTransparency = 1
-    lbl.Text = msg
-    lbl.TextColor3 = isArg and Color3.fromRGB(255, 200, 100) or Color3.fromRGB(200, 255, 200)
-    lbl.TextSize = 14
-    lbl.Font = Enum.Font.Code
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.TextWrapped = true
-    lbl.Parent = text
-end
-
--- Hook the remotes
 for _, v in ipairs(ReplicatedStorage:GetDescendants()) do
     if v:IsA("RemoteEvent") then
         local old = hookfunction(v.FireServer, function(self, ...)
-            local args = {...}
-            local name = v.Name
-            
-            -- Print everything to the UI
-            log("FIRED: " .. name)
-            
-            for i, arg in ipairs(args) do
-                local val = tostring(arg)
-                if typeof(arg) == "table" then
-                    val = "Table: {"
-                    for k, v2 in pairs(arg) do
-                        val = val .. tostring(k) .. "=" .. tostring(v2) .. ", "
-                    end
-                    val = val .. "}"
-                end
-                log("   Arg " .. i .. ": " .. val, true)
-            end
-            
+            print("[FIRE]", v:GetFullName(), ...)
+            return old(self, ...)
+        end)
+    elseif v:IsA("RemoteFunction") then
+        local old = hookfunction(v.InvokeServer, function(self, ...)
+            print("[INVOKE]", v:GetFullName(), ...)
             return old(self, ...)
         end)
     end
 end
 
-log("HOOK ACTIVE.")
-log("Go put a brainrot in a trade now.")
+print("Hook active. Open the Console. Put a brainrot in a trade.")
