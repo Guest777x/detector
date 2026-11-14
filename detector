@@ -1,13 +1,20 @@
 local Players = game:GetService("Players")
 local PG = Players.LocalPlayer:WaitForChild("PlayerGui")
 
+-- Delete old UIs if they exist
+for _, v in pairs(PG:GetChildren()) do
+    if v.Name == "AutoOfferTest" or v.Name == "ClickSpy" then
+        v:Destroy()
+    end
+end
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "AutoOfferTest"
 ScreenGui.Parent = PG
 
 local Toggle = Instance.new("TextButton")
-Toggle.Size = UDim2.new(0, 200, 0, 50)
-Toggle.Position = UDim2.new(0, 20, 0, 20)
+Toggle.Size = UDim2.new(0, 250, 0, 60)
+Toggle.Position = UDim2.new(0, 20, 0, 200) -- Moved down so it doesn't overlap
 Toggle.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
 Toggle.Text = "AUTO-OFFER: OFF"
 Toggle.TextColor3 = Color3.new(1,1,1)
@@ -16,12 +23,13 @@ Toggle.TextSize = 20
 Toggle.Parent = ScreenGui
 
 local isOn = false
-local targetItem = "Strawberrita" -- Searches for this text
+local targetItem = "Strawberrita"
 
 Toggle.MouseButton1Click:Connect(function()
     isOn = not isOn
     Toggle.Text = isOn and "AUTO-OFFER: ON" or "AUTO-OFFER: OFF"
     Toggle.BackgroundColor3 = isOn and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+    print("Auto-Offer is now:", isOn)
 end)
 
 local TradeRoot = PG:WaitForChild("TradeLiveTrade")
@@ -29,21 +37,22 @@ local TradeInner = TradeRoot:WaitForChild("TradeLiveTrade")
 local MySide = TradeInner:WaitForChild("Your")
 local ScrollingFrame = MySide:WaitForChild("ScrollingFrame")
 
+print("Watching inventory for: " .. targetItem)
+
 ScrollingFrame.DescendantAdded:Connect(function(obj)
     if obj.Name == "Spacer" and isOn then
-        task.wait(0.1) -- let it load
+        task.wait(0.1)
         local title = obj:FindFirstChild("Title", true)
         if title and string.find(string.lower(title.Text), string.lower(targetItem)) then
             print("Found target item: " .. title.Text .. ". Trying to auto-add...")
             
-            -- Find the button connection and fire it
             if getconnections then
                 local conns = getconnections(obj.MouseButton1Click)
                 for _, c in pairs(conns) do
                     if c.Fire then
                         pcall(function()
                             c:Fire()
-                            print("Fired connection successfully.")
+                            print("Successfully fired connection for " .. title.Text)
                         end)
                     end
                 end
