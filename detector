@@ -1,32 +1,80 @@
-local RS = game:GetService("ReplicatedStorage")
-local net = RS:FindFirstChild("Packages")
-if not net then
-    print("Packages not found yet. Wait a few seconds and rerun.")
+local Players = game:GetService("Players")
+local PG = Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ClickSpy"
+ScreenGui.Parent = PG
+
+local Box = Instance.new("Frame")
+Box.Size = UDim2.new(0, 350, 0, 300)
+Box.Position = UDim2.new(0, 20, 0, 20)
+Box.BackgroundColor3 = Color3.new(0, 0, 0)
+Box.BorderSizePixel = 2
+Box.BorderColor3 = Color3.new(0, 1, 0)
+Box.Parent = ScreenGui
+
+local Text = Instance.new("TextLabel")
+Text.Size = UDim2.new(1, -10, 1, -10)
+Text.Position = UDim2.new(0, 5, 0, 5)
+Text.BackgroundTransparency = 1
+Text.TextColor3 = Color3.new(1, 1, 1)
+Text.Font = Enum.Font.Code
+Text.TextSize = 12
+Text.TextWrapped = true
+Text.TextXAlignment = Enum.TextXAlignment.Left
+Text.TextYAlignment = Enum.TextYAlignment.Top
+Text.Text = "READY.\nOpen a trade."
+Text.Parent = Box
+
+local function log(msg)
+    Text.Text = Text.Text .. "\n" .. msg
+end
+
+-- Wait for the trade GUI to open
+local TradeRoot = PG:WaitForChild("TradeLiveTrade", 60)
+if not TradeRoot then
+    log("Error: Could not find TradeLiveTrade")
     return
 end
 
-net = net:FindFirstChild("Net") or net
+local TradeInner = TradeRoot:FindFirstChild("TradeLiveTrade") or TradeRoot
+log("Found Trade Window.")
 
-local count = 0
-for _, v in ipairs(net:GetDescendants()) do
-    if v:IsA("RemoteEvent") then
-        local old = hookfunction(v.FireServer, function(self, ...)
-            local name = v.Name
-            if string.find(string.lower(name), "trade") or string.find(string.lower(name), "item") then
-                print("[TRADE FIRE] " .. name, ...)
-            end
-            return old(self, ...)
-        end)
-        count = count + 1
-    elseif v:IsA("RemoteFunction") then
-        local old = hookfunction(v.InvokeServer, function(self, ...)
-            local name = v.Name
-            if string.find(string.lower(name), "trade") or string.find(string.lower(name), "item") then
-                print("[TRADE INVOKE] " .. name, ...)
-            end
-            return old(self, ...)
-        end)
-        count = count + 1
-    end
+-- Watch the "Your" side for the inventory list
+local MySide = TradeInner:WaitForChild("Your", 10)
+if not MySide then
+    log("Error: Could not find 'Your' side.")
+    return
 end
-print("Hooked " .. count .. " trade-related remotes.")
+
+local ScrollingFrame = MySide:WaitForChild("ScrollingFrame", 10)
+if not ScrollingFrame then
+    log("Error: Could not find ScrollingFrame.")
+    return
+end
+
+log("Watching inventory buttons. Click a brainrot to add it.")
+
+-- Watch for inventory buttons being clicked
+ScrollingFrame.DescendantAdded:Connect(function(obj)
+    if obj:IsA("TextButton") or obj:IsA("ImageButton") then
+        -- We only care about the buttons that hold the brainrots
+        obj.MouseButton1Click:Connect(function()
+            -- Find the item name
+            local spacer = obj:FindFirstChild("Spacer", true)
+            local title = spacer and spacer:FindFirstChild("Title")
+            local itemName = title and title.Text or "Unknown Item"
+            
+            log("CLICKED: " .. itemName)
+            log("BUTTON NAME: " .. obj.Name)
+            
+            -- If the button has a remote attached to it, we can catch it here
+            if getconnections then
+                local conns = getconnections(obj.MouseButton1Click)
+                if #conns > 0 then
+                    log("Button has " .. #conns .. " connections.")
+                end
+            end
+        end)
+    end
+end)
