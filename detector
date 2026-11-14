@@ -1,77 +1,35 @@
-local Players = game:GetService("Players")
-local PG = Players.LocalPlayer:WaitForChild("PlayerGui")
+local PG = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+print("--- SCANNER STARTED ---")
 
--- Delete the old UI so you don't get confused
-for _, v in pairs(PG:GetChildren()) do
-    if v.Name == "AutoOfferTest" then v:Destroy() end
-end
-
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "AutoOfferTest"
-ScreenGui.Parent = PG
-
-local Toggle = Instance.new("TextButton")
-Toggle.Size = UDim2.new(0, 250, 0, 60)
-Toggle.Position = UDim2.new(0, 20, 0, 200)
-Toggle.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
-Toggle.Text = "SCAN & OFFER"
-Toggle.TextColor3 = Color3.new(1,1,1)
-Toggle.Font = Enum.Font.SourceSansBold
-Toggle.TextSize = 20
-Toggle.Parent = ScreenGui
-
-local targetItem = "Strawberrita"
-
-Toggle.MouseButton1Click:Connect(function()
-    Toggle.Text = "SCANNING..."
-    Toggle.BackgroundColor3 = Color3.new(0.8, 0.8, 0.2)
-    
-    local TradeRoot = PG:FindFirstChild("TradeLiveTrade")
-    if not TradeRoot then
-        Toggle.Text = "NO TRADE OPEN"
-        Toggle.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
-        return
-    end
-    
-    local TradeInner = TradeRoot:FindFirstChild("TradeLiveTrade") or TradeRoot
-    local MySide = TradeInner:FindFirstChild("Your")
-    local ScrollingFrame = MySide and MySide:FindFirstChild("ScrollingFrame")
-    
-    if not ScrollingFrame then
-        Toggle.Text = "NO INVENTORY FOUND"
-        Toggle.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
-        return
-    end
-    
-    local found = false
-    -- Loop through existing items
-    for _, obj in ipairs(ScrollingFrame:GetDescendants()) do
-        if obj.Name == "Spacer" then
-            local title = obj:FindFirstChild("Title", true)
-            if title and string.find(string.lower(title.Text), string.lower(targetItem)) then
-                found = true
-                print("Found: " .. title.Text)
-                if getconnections then
-                    local conns = getconnections(obj.MouseButton1Click)
-                    for _, c in pairs(conns) do
-                        if c.Fire then
-                            pcall(function()
-                                c:Fire()
-                                print("Clicked item!")
-                            end)
+-- Run continuously
+task.spawn(function()
+    while true do
+        task.wait(1)
+        local TradeRoot = PG:FindFirstChild("TradeLiveTrade")
+        if TradeRoot then
+            local TradeInner = TradeRoot:FindFirstChild("TradeLiveTrade") or TradeRoot
+            local MySide = TradeInner:FindFirstChild("Your")
+            local ScrollingFrame = MySide and MySide:FindFirstChild("ScrollingFrame")
+            
+            if ScrollingFrame then
+                for _, obj in ipairs(ScrollingFrame:GetDescendants()) do
+                    if obj.Name == "Spacer" then
+                        local title = obj:FindFirstChild("Title", true)
+                        -- Search for your item
+                        if title and string.find(string.lower(title.Text), "strawberrita") then
+                            print("FOUND: " .. title.Text .. " - Clicking it...")
+                            if getconnections then
+                                local conns = getconnections(obj.MouseButton1Click)
+                                for _, c in pairs(conns) do
+                                    if c.Fire then
+                                        pcall(function() c:Fire() end)
+                                    end
+                                end
+                            end
                         end
                     end
                 end
-                break
             end
         end
-    end
-    
-    if found then
-        Toggle.Text = "OFFERED!"
-        Toggle.BackgroundColor3 = Color3.new(0.2, 0.8, 0.2)
-    else
-        Toggle.Text = "ITEM NOT FOUND"
-        Toggle.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
     end
 end)
