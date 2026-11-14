@@ -1,18 +1,32 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-print("Hook starting...")
-
-for _, v in ipairs(ReplicatedStorage:GetDescendants()) do
-    if v:IsA("RemoteEvent") then
-        local old = hookfunction(v.FireServer, function(self, ...)
-            print("[FIRE]", v:GetFullName(), ...)
-            return old(self, ...)
-        end)
-    elseif v:IsA("RemoteFunction") then
-        local old = hookfunction(v.InvokeServer, function(self, ...)
-            print("[INVOKE]", v:GetFullName(), ...)
-            return old(self, ...)
-        end)
-    end
+local RS = game:GetService("ReplicatedStorage")
+local net = RS:FindFirstChild("Packages")
+if not net then
+    print("Packages not found yet. Wait a few seconds and rerun.")
+    return
 end
 
-print("Hook active. Open the Console. Put a brainrot in a trade.")
+net = net:FindFirstChild("Net") or net
+
+local count = 0
+for _, v in ipairs(net:GetDescendants()) do
+    if v:IsA("RemoteEvent") then
+        local old = hookfunction(v.FireServer, function(self, ...)
+            local name = v.Name
+            if string.find(string.lower(name), "trade") or string.find(string.lower(name), "item") then
+                print("[TRADE FIRE] " .. name, ...)
+            end
+            return old(self, ...)
+        end)
+        count = count + 1
+    elseif v:IsA("RemoteFunction") then
+        local old = hookfunction(v.InvokeServer, function(self, ...)
+            local name = v.Name
+            if string.find(string.lower(name), "trade") or string.find(string.lower(name), "item") then
+                print("[TRADE INVOKE] " .. name, ...)
+            end
+            return old(self, ...)
+        end)
+        count = count + 1
+    end
+end
+print("Hooked " .. count .. " trade-related remotes.")
