@@ -1,11 +1,8 @@
 local Players = game:GetService("Players")
 local PG = Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Delete old UIs if they exist
 for _, v in pairs(PG:GetChildren()) do
-    if v.Name == "AutoOfferTest" or v.Name == "ClickSpy" then
-        v:Destroy()
-    end
+    if v.Name == "AutoOfferTest" then v:Destroy() end
 end
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -14,49 +11,66 @@ ScreenGui.Parent = PG
 
 local Toggle = Instance.new("TextButton")
 Toggle.Size = UDim2.new(0, 250, 0, 60)
-Toggle.Position = UDim2.new(0, 20, 0, 200) -- Moved down so it doesn't overlap
+Toggle.Position = UDim2.new(0, 20, 0, 200)
 Toggle.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
-Toggle.Text = "AUTO-OFFER: OFF"
+Toggle.Text = "SCAN & OFFER"
 Toggle.TextColor3 = Color3.new(1,1,1)
 Toggle.Font = Enum.Font.SourceSansBold
 Toggle.TextSize = 20
 Toggle.Parent = ScreenGui
 
-local isOn = false
 local targetItem = "Strawberrita"
 
 Toggle.MouseButton1Click:Connect(function()
-    isOn = not isOn
-    Toggle.Text = isOn and "AUTO-OFFER: ON" or "AUTO-OFFER: OFF"
-    Toggle.BackgroundColor3 = isOn and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-    print("Auto-Offer is now:", isOn)
-end)
-
-local TradeRoot = PG:WaitForChild("TradeLiveTrade")
-local TradeInner = TradeRoot:WaitForChild("TradeLiveTrade")
-local MySide = TradeInner:WaitForChild("Your")
-local ScrollingFrame = MySide:WaitForChild("ScrollingFrame")
-
-print("Watching inventory for: " .. targetItem)
-
-ScrollingFrame.DescendantAdded:Connect(function(obj)
-    if obj.Name == "Spacer" and isOn then
-        task.wait(0.1)
-        local title = obj:FindFirstChild("Title", true)
-        if title and string.find(string.lower(title.Text), string.lower(targetItem)) then
-            print("Found target item: " .. title.Text .. ". Trying to auto-add...")
-            
-            if getconnections then
-                local conns = getconnections(obj.MouseButton1Click)
-                for _, c in pairs(conns) do
-                    if c.Fire then
-                        pcall(function()
-                            c:Fire()
-                            print("Successfully fired connection for " .. title.Text)
-                        end)
+    Toggle.Text = "SCANNING..."
+    Toggle.BackgroundColor3 = Color3.new(0.8, 0.8, 0.2)
+    
+    local TradeRoot = PG:FindFirstChild("TradeLiveTrade")
+    if not TradeRoot then
+        Toggle.Text = "NO TRADE OPEN"
+        Toggle.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
+        return
+    end
+    
+    local TradeInner = TradeRoot:FindFirstChild("TradeLiveTrade") or TradeRoot
+    local MySide = TradeInner:FindFirstChild("Your")
+    local ScrollingFrame = MySide and MySide:FindFirstChild("ScrollingFrame")
+    
+    if not ScrollingFrame then
+        Toggle.Text = "NO INVENTORY FOUND"
+        Toggle.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
+        return
+    end
+    
+    local found = false
+    -- Loop through existing items
+    for _, obj in ipairs(ScrollingFrame:GetDescendants()) do
+        if obj.Name == "Spacer" then
+            local title = obj:FindFirstChild("Title", true)
+            if title and string.find(string.lower(title.Text), string.lower(targetItem)) then
+                found = true
+                print("Found: " .. title.Text)
+                if getconnections then
+                    local conns = getconnections(obj.MouseButton1Click)
+                    for _, c in pairs(conns) do
+                        if c.Fire then
+                            pcall(function()
+                                c:Fire()
+                                print("Clicked item!")
+                            end)
+                        end
                     end
                 end
+                break
             end
         end
+    end
+    
+    if found then
+        Toggle.Text = "OFFERED!"
+        Toggle.BackgroundColor3 = Color3.new(0.2, 0.8, 0.2)
+    else
+        Toggle.Text = "ITEM NOT FOUND"
+        Toggle.BackgroundColor3 = Color3.new(0.8, 0.2, 0.2)
     end
 end)
