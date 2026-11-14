@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local PG = Players.LocalPlayer:WaitForChild("PlayerGui")
 
+-- Delete the old UI so you don't get confused
 for _, v in pairs(PG:GetChildren()) do
     if v.Name == "AutoOfferTest" then v:Destroy() end
 end
